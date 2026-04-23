@@ -29,6 +29,16 @@ ui ──▶ server (HTTP/WS only)
 - Bun은 런타임이자 패키지 매니저이자 테스트 러너다. `bun test`, `bun run`, `bun install` 기준.
 - 외부 npm 의존성은 패키지 단위로 최소화한다. `core`/`server`는 의존성 없이 표준 라이브러리로 성립시키는 것을 선호한다.
 
+### Bun API 우선 원칙
+
+- **Bun이 네이티브로 제공하는 API는 Bun 쪽을 먼저 쓴다.** 동일 기능의 Node API는 대체재가 없을 때만 사용한다.
+- 대표 매핑:
+  - 자식 프로세스: `Bun.spawn` (not `node:child_process`)
+  - 파일 I/O: `Bun.file(path).text()` / `Bun.write(path, data)` (not `fs.readFile`/`fs.writeFile`)
+  - HTTP 서버: `Bun.serve` (not `node:http`)
+  - WebSocket 서버: `Bun.serve`의 `websocket` 옵션 (not `ws` 패키지)
+- 단, Node 전용이 더 자연스러운 곳은 그대로 둔다. 예: `node:fs.stat` 로 디렉토리 판별(`Bun.file`은 파일 전용), `node:path`/`node:os`/`node:events`/`node:crypto` 는 Bun이 그대로 재사용.
+
 ## 파일 / 디렉토리 네이밍
 
 - 파일명: `kebab-case.ts`. 단, React 컴포넌트 파일은 `PascalCase.tsx`.
