@@ -30,10 +30,12 @@ export async function stopSpawn(repoId: string): Promise<StopResponse> {
   return handle<StopResponse>(res);
 }
 
+// WebSocket connects directly to the server, bypassing the Vite dev proxy.
+// Vite's `/ws` + `ws: true` proxy fails silently on upgrade in this project —
+// see docs/plan/archive/20260424-fix-vite-ws-proxy/reason.md.
+const WS_BASE =
+  (import.meta.env.VITE_WS_BASE as string | undefined) ?? 'ws://localhost:7357';
+
 export function repoWsUrl(repoId: string): string {
-  if (BASE.length === 0) {
-    const origin = window.location.origin.replace(/^http/, 'ws');
-    return `${origin}/ws/repos/${repoId}`;
-  }
-  return `${BASE.replace(/^http/, 'ws')}/ws/repos/${repoId}`;
+  return `${WS_BASE}/ws/repos/${repoId}`;
 }
