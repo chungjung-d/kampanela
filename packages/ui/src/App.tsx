@@ -3,6 +3,7 @@ import { useRepos } from './hooks/useRepos.ts';
 import { RegisterForm } from './components/RegisterForm.tsx';
 import { RepoList } from './components/RepoList.tsx';
 import { RepoLogView } from './components/RepoLogView.tsx';
+import { OfficeCanvas } from './components/OfficeCanvas.tsx';
 
 export function App(): JSX.Element {
   const { repos, loading, error, register, remove } = useRepos();
@@ -15,12 +16,21 @@ export function App(): JSX.Element {
         fontFamily:
           "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
         display: 'grid',
-        gridTemplateColumns: '320px 1fr',
-        minHeight: '100vh',
+        gridTemplateColumns: '300px 1fr',
+        height: '100vh',
+        background: '#0b0d13',
+        color: '#e4e4e7',
       }}
     >
-      <aside style={{ borderRight: '1px solid #ddd', display: 'grid', gridTemplateRows: 'auto 1fr' }}>
-        <div style={{ padding: 16, borderBottom: '1px solid #eee' }}>
+      <aside
+        style={{
+          borderRight: '1px solid #1f2230',
+          display: 'grid',
+          gridTemplateRows: 'auto 1fr',
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ padding: 16, borderBottom: '1px solid #1f2230' }}>
           <h2 style={{ margin: '0 0 8px' }}>kampanela</h2>
           <RegisterForm
             onSubmit={async (input) => {
@@ -46,14 +56,31 @@ export function App(): JSX.Element {
           {error && <div style={{ padding: 16, color: 'crimson' }}>{error}</div>}
         </div>
       </aside>
-      <main>
-        {selected ? (
-          <RepoLogView repoId={selected.id} repoName={selected.name} />
-        ) : (
-          <div style={{ padding: 24, color: '#888' }}>
-            좌측에서 레포를 선택하거나 새로 등록하세요.
-          </div>
-        )}
+      <main
+        style={{
+          display: 'grid',
+          gridTemplateRows: '1fr auto',
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ padding: 12, overflow: 'auto' }}>
+          <OfficeCanvas repos={repos} selectedId={selectedId} onSelect={setSelectedId} />
+        </div>
+        <div
+          style={{
+            borderTop: '1px solid #1f2230',
+            maxHeight: '40vh',
+            overflow: 'hidden',
+          }}
+        >
+          {selected ? (
+            <RepoLogView repoId={selected.id} repoName={selected.name} />
+          ) : (
+            <div style={{ padding: 16, color: '#666', fontSize: 13 }}>
+              상단 오피스에서 에이전트를 클릭하거나 좌측에서 레포를 선택하면 로그가 여기 뜹니다.
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
