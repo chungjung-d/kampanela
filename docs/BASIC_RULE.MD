@@ -15,6 +15,7 @@ last_verified: 2026-04-24
 
 - 기능 변경: [docs/code-architecture/index.md](./code-architecture/index.md), [docs/spec/index.md](./spec/index.md), [docs/stack/index.md](./stack/index.md)
 - 계획/상태 변경: [docs/plan/index.md](./plan/index.md), [docs/plan/in-progress/index.md](./plan/in-progress/index.md)
+- 런타임 버그/디버깅: [docs/debug/index.md](./debug/index.md)
 
 ## 브랜치 규칙 (모든 변경 사항 작업 전제조건)
 

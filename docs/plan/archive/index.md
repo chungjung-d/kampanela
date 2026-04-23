@@ -13,6 +13,7 @@
 
 ## 완료된 작업 목록
 
+- [20260424-fix-ws-subscriber-timing](./20260424-fix-ws-subscriber-timing) — 2026-04-24: SessionManager 구독자 맵과 세션 맵 분리. WS가 spawn보다 먼저 연결되는 실제 UI 흐름에서 이벤트가 drop되던 버그 수정. docs/debug/ 신설로 계층별 probe 방법론 상설화.
 - [20260424-mvp-register-spawn](./20260424-mvp-register-spawn) — 2026-04-24: Axis 1 MVP 완료. Bun workspaces 부트스트랩, shared/core/server/ui 4개 패키지 구현, 레포 등록 + `claude` CLI spawn + WebSocket 이벤트 스트림, typecheck + test + build CI 도입. 사용자 end-to-end 검증은 task.md 7번 잔여.
 
 ## 보존 규칙

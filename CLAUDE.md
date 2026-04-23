@@ -22,3 +22,4 @@
 - [docs/stack/index.md](./docs/stack/index.md)
 - [docs/reference/index.md](./docs/reference/index.md)
 - [docs/plan/index.md](./docs/plan/index.md)
+- [docs/debug/index.md](./docs/debug/index.md)
