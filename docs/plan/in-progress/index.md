@@ -7,7 +7,9 @@
 
 ## 현재 진행 목록
 
-_(없음 — main 브랜치는 항상 비어 있어야 한다. CI로 강제됨. 실제 계획은 feature branch에서만 생성·관리한다.)_
+- [20260424-mvp-register-spawn](./20260424-mvp-register-spawn) — 2026-04-24 착수: 레포 등록 + 단일 Claude Code spawn 회로 구축 (Axis 1 MVP)
+
+> 주의: main 브랜치에는 이 목록이 항상 비어 있어야 한다 (plan-lint CI가 강제). 이 엔트리는 현재 feature branch에서만 유지되며, 계획 완료 시 `archive`로 이동한 뒤 이 목록에서 제거된다.
 
 ## 계획 템플릿(필수 항목)
 
