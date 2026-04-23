@@ -57,11 +57,16 @@ kampanela/
 - **`ui`는 순수 뷰다.** 로컬 FS에 직접 접근하지 않으며 `server`를 통해서만 상호작용한다.
 - **`shared`는 의존성의 루트다.** 다른 패키지에서 의존하지만 역방향 의존은 금지한다.
 
-## 섹션 (예정)
+## 패키지별 상세
 
-- 패키지별 상세 (각 `packages/*` 추가 시 이 index에서 링크)
-- 상태 저장소 (파일 경로/락 전략)
-- 에러/로깅 정책
+- [shared.md](./shared.md) — `@kampanela/shared`: 순수 타입
+- [core.md](./core.md) — `@kampanela/core`: 레지스트리 + spawn
+- [server.md](./server.md) — `@kampanela/server`: Bun HTTP + WS 브로커
+- [ui.md](./ui.md) — `@kampanela/ui`: React + Vite
+
+## 공통 규칙
+
+- [conventions.md](./conventions.md) — 모듈 경계, 네이밍, 에러, 테스트, 로깅
 
 ## 연관 문서
 
