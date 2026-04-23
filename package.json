@@ -1,0 +1,21 @@
+{
+  "name": "kampanela",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Meta-orchestration hub for multi-repo Claude Code teams",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "bun run --filter '*' build",
+    "test": "bun test",
+    "dev:server": "bun run --filter @kampanela/server dev",
+    "dev:ui": "bun run --filter @kampanela/ui dev",
+    "typecheck": "bun run --filter '*' typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "@types/bun": "^1.1.13"
+  }
+}

@@ -13,7 +13,7 @@
 
 ## 완료된 작업 목록
 
-_(없음)_
+- [20260424-mvp-register-spawn](./20260424-mvp-register-spawn) — 2026-04-24: Axis 1 MVP 완료. Bun workspaces 부트스트랩, shared/core/server/ui 4개 패키지 구현, 레포 등록 + `claude` CLI spawn + WebSocket 이벤트 스트림, typecheck + test + build CI 도입. 사용자 end-to-end 검증은 task.md 7번 잔여.
 
 ## 보존 규칙
 
