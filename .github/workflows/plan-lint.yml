@@ -1,0 +1,35 @@
+name: plan-lint
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  in-progress-must-be-empty:
+    name: docs/plan/in-progress must be empty
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+
+      - name: Fail if any in-progress plan folder exists
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ ! -d docs/plan/in-progress ]; then
+            echo "docs/plan/in-progress directory not found — skipping."
+            exit 0
+          fi
+
+          active=$(find docs/plan/in-progress -mindepth 1 -maxdepth 1 -type d | sort)
+
+          if [ -n "$active" ]; then
+            echo "::error::Active plan folder(s) found in docs/plan/in-progress/:"
+            echo "$active" | sed 's/^/  - /'
+            echo ""
+            echo "::error::Each plan must either be archived (move to docs/plan/archive/) or removed before merging."
+            exit 1
+          fi
+
+          echo "OK — docs/plan/in-progress/ has no active plan folders."
