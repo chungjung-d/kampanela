@@ -144,12 +144,34 @@ tail -f /tmp/kampanela-server.log
 
 | 증상 | 1차 의심 | 확인 방법 |
 |------|---------|---------|
-| UI에서 Spawn 눌러도 아무 이벤트 안 뜸 | WS 구독 타이밍, Vite 프록시 | 위 4번 probe |
+| UI에서 Spawn 눌러도 아무 이벤트 안 뜸 | (1) WS 구독 타이밍 (2) **브라우저 경로의 WS만 깨짐** | 위 4번 probe를 **`ws://localhost:5173`** 경로로 한 번 더 해본다. 5173으로 0개 수신이면 Vite WS proxy 문제 |
 | Spawn이 즉시 exit | `claude` 인증 or 인자 | 위 1번 직접 실행 |
 | 레포 등록이 안 됨 | 경로 검증 (절대경로/디렉토리) | curl 로 POST 재현, 응답 코드 확인 |
 | 재시작 후 레지스트리 날아감 | `KAMPANELA_HOME` 오버라이드 잔재 | `env | grep KAMPANELA`, `cat ~/.kampanela/repos.json` |
 | `EADDRINUSE` | 이전 서버 프로세스 남음 | lsof + kill |
 | 테스트는 통과하는데 UI가 삑남 | 통합 테스트가 커버 못 하는 타이밍/순서 | 위 4번처럼 실제 사용 흐름을 스크립트로 재현 |
+| Node WS 테스트는 성공인데 브라우저에서 WS만 안 옴 | **Vite `/ws` proxy 실패** (`ws: true` 옵션이 silent로 깨짐) | UI는 `ws://localhost:7357`로 직접 연결해야 함. `packages/ui/src/api/spawn.ts`의 `WS_BASE` 참조 |
+
+### Vite WS proxy의 silent failure
+
+이 프로젝트에서 겪은 대표적 함정. `vite.config.ts`에 다음처럼 `/ws` 프록시를 걸어도 upgrade 단계에서 조용히 실패:
+
+```ts
+// 동작하지 않는 예
+server: {
+  proxy: {
+    '/ws': { target: 'http://localhost:7357', changeOrigin: true, ws: true },
+  },
+}
+```
+
+- HTTP 프록시는 정상. 따라서 `GET /api/repos` 등은 통과.
+- WS만 `onopen` 발생 안 하고 `onclose`만 뜸.
+- Vite 로그에 에러도 안 찍힘.
+
+**대응**: UI가 WS만 서버 origin으로 **직접** 연결. `VITE_WS_BASE` env로 오버라이드 가능 (기본 `ws://localhost:7357`).
+
+**교훈**: Node의 `WebSocket`으로 서버에 바로 붙는 통합 테스트는 이 버그를 잡지 못한다. Vite dev 서버까지 띄워 5173 경로로 실측해야 한다. docs 작성 시 "probe 4번을 Vite dev 서버 경로로도 한 번 더"로 반드시 양쪽 확인.
 
 ## 관련 문서
 

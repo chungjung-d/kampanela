@@ -1,11 +1,21 @@
-import { useState, type JSX } from 'react';
+import { useMemo, useState, type JSX } from 'react';
 import type { AgentEvent, SpawnRequest } from '@kampanela/shared';
 import { startSpawn, stopSpawn } from '../api/spawn.ts';
 import { useRepoLog } from '../hooks/useRepoLog.ts';
+import { formatAgentEvent, type FormattedKind } from '../lib/format-event.ts';
 
 type Props = {
   repoId: string;
   repoName: string;
+};
+
+const KIND_COLORS: Record<FormattedKind, string> = {
+  info: '#8ab4ff',
+  status: '#b38cff',
+  action: '#ffd479',
+  output: '#9be29b',
+  result: '#4ade80',
+  error: '#ff8080',
 };
 
 export function RepoLogView({ repoId, repoName }: Props): JSX.Element {
@@ -13,6 +23,18 @@ export function RepoLogView({ repoId, repoName }: Props): JSX.Element {
   const [prompt, setPrompt] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showRaw, setShowRaw] = useState(false);
+
+  const formatted = useMemo(
+    () =>
+      events.map((e, idx) => ({
+        idx,
+        raw: e,
+        line: formatAgentEvent(e),
+      })),
+    [events],
+  );
+  const visible = showRaw ? formatted : formatted.filter((r) => r.line !== null);
 
   const run = async () => {
     setBusy(true);
@@ -41,11 +63,21 @@ export function RepoLogView({ repoId, repoName }: Props): JSX.Element {
 
   return (
     <div style={{ display: 'grid', gap: 8, padding: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3 style={{ margin: 0 }}>{repoName}</h3>
-        <span style={{ fontSize: 12, color: connected ? 'green' : '#999' }}>
-          {connected ? '● WS connected' : '○ disconnected'}
-        </span>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <label style={{ fontSize: 12, color: '#666', display: 'flex', gap: 4, alignItems: 'center' }}>
+            <input
+              type="checkbox"
+              checked={showRaw}
+              onChange={(e) => setShowRaw(e.target.checked)}
+            />
+            raw JSON
+          </label>
+          <span style={{ fontSize: 12, color: connected ? 'green' : '#999' }}>
+            {connected ? '● WS connected' : '○ disconnected'}
+          </span>
+        </div>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <input
@@ -69,31 +101,45 @@ export function RepoLogView({ repoId, repoName }: Props): JSX.Element {
           color: '#eee',
           padding: 12,
           minHeight: 280,
-          maxHeight: 500,
+          maxHeight: 560,
           overflow: 'auto',
           fontSize: 12,
+          lineHeight: 1.5,
           borderRadius: 4,
+          margin: 0,
         }}
       >
-        {events.map((e, i) => (
-          <div key={i}>{formatEvent(e)}</div>
-        ))}
+        {visible.length === 0 ? (
+          <div style={{ color: '#666' }}>
+            {connected ? '대기 중 — Spawn 버튼으로 에이전트를 시작하세요.' : 'WS 연결 대기…'}
+          </div>
+        ) : (
+          visible.map((row) => (
+            <LogRow key={row.idx} showRaw={showRaw} raw={row.raw} line={row.line} />
+          ))
+        )}
       </pre>
     </div>
   );
 }
 
-function formatEvent(e: AgentEvent): string {
-  switch (e.type) {
-    case 'stdout':
-      return `[out] ${e.text}`;
-    case 'stderr':
-      return `[err] ${e.text}`;
-    case 'status':
-      return `[status] ${e.status}`;
-    case 'exit':
-      return `[exit] code=${e.code ?? 'null'}`;
-    case 'claude_event':
-      return `[evt] ${JSON.stringify(e.payload).slice(0, 200)}`;
+function LogRow({
+  showRaw,
+  raw,
+  line,
+}: {
+  showRaw: boolean;
+  raw: AgentEvent;
+  line: ReturnType<typeof formatAgentEvent>;
+}): JSX.Element {
+  if (showRaw) {
+    const color = line ? KIND_COLORS[line.kind] : '#888';
+    return (
+      <div style={{ color, marginBottom: 2 }}>
+        [{raw.type}] {JSON.stringify(raw).slice(0, 400)}
+      </div>
+    );
   }
+  if (!line) return <></>;
+  return <div style={{ color: KIND_COLORS[line.kind], marginBottom: 2 }}>{line.text}</div>;
 }
