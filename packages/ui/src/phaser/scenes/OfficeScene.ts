@@ -1,16 +1,6 @@
 import Phaser from 'phaser';
 import type { RegisteredRepo, AgentEvent } from '@kampanela/shared';
-import {
-  CANVAS_W,
-  CANVAS_H,
-  GRID_COLS,
-  GRID_ROWS,
-  TILE,
-  ENTRY,
-  assignSlot,
-  deskOf,
-  tileToPixel,
-} from '../config.ts';
+import { CANVAS_W, CANVAS_H, ENTRY, TILE, assignSlot, tileToPixel } from '../config.ts';
 import { TEX, generateTextures } from '../assets.ts';
 import { AgentSprite } from '../sprites/AgentSprite.ts';
 import { eventToCommands } from '../controller.ts';
@@ -39,9 +29,9 @@ export class OfficeScene extends Phaser.Scene {
 
   create(): void {
     generateTextures(this);
-    this.drawFloor();
-    this.drawWalls();
-    this.drawDesks();
+    // One image for the entire static office (floor + walls + desks) instead
+    // of hundreds of 32x32 tile sprites. Big win for render cost.
+    this.add.image(CANVAS_W / 2, CANVAS_H / 2, TEX.officeBg).setOrigin(0.5, 0.5);
 
     this.events.on('set-repos', (repos: RegisteredRepo[]) => this.applyRepos(repos));
     this.events.on('set-selected', (id: string | null) => this.applySelected(id));
@@ -78,41 +68,6 @@ export class OfficeScene extends Phaser.Scene {
   pushEvent(event: AgentEvent): void {
     if (!this.ready) return;
     this.applyEvent(event);
-  }
-
-  private drawFloor(): void {
-    for (let c = 0; c < GRID_COLS; c++) {
-      for (let r = 0; r < GRID_ROWS; r++) {
-        const { x, y } = tileToPixel({ col: c, row: r });
-        this.add.image(x, y, TEX.floor).setOrigin(0.5, 0.5);
-      }
-    }
-  }
-
-  private drawWalls(): void {
-    // Top/bottom
-    for (let c = 0; c < GRID_COLS; c++) {
-      const top = tileToPixel({ col: c, row: 0 });
-      const bot = tileToPixel({ col: c, row: GRID_ROWS - 1 });
-      this.add.image(top.x, top.y, TEX.wall);
-      this.add.image(bot.x, bot.y, TEX.wall);
-    }
-    // Sides (skip entry)
-    for (let r = 0; r < GRID_ROWS; r++) {
-      if (r !== ENTRY.row) {
-        const left = tileToPixel({ col: 0, row: r });
-        this.add.image(left.x, left.y, TEX.wall);
-      }
-      const right = tileToPixel({ col: GRID_COLS - 1, row: r });
-      this.add.image(right.x, right.y, TEX.wall);
-    }
-  }
-
-  private drawDesks(): void {
-    for (let i = 0; i < 4; i++) {
-      const pos = tileToPixel(deskOf(i));
-      this.add.image(pos.x, pos.y, TEX.desk);
-    }
   }
 
   applyRepos(repos: RegisteredRepo[]): void {

@@ -13,6 +13,7 @@
 
 ## 완료된 작업 목록
 
+- [20260424-perf-scene-and-log](./20260424-perf-scene-and-log) — 2026-04-24: Axis 2 MVP 직후 체감 렉 두 갈래 해소. 씬의 정적 오브젝트 248→1로 베이크 + 로그 패널을 rAF 단위로 배칭. 부수적으로 RepoList/LogRow를 memo + useCallback으로 안정화.
 - [20260424-axis2-phaser-office](./20260424-axis2-phaser-office) — 2026-04-24: Axis 2 MVP. Phaser 3 기반 도트 그래픽 오피스 씬, 등록된 repo당 에이전트 스프라이트 + 말풍선(💭/🔧) + 플로트업 텍스트 + 레포 선택 링. 멀티 repo WS 구독 훅, React ↔ Phaser 브릿지. 실제 픽셀 아트 에셋 교체와 walk 애니메이션은 다음 이터레이션.
 - [20260424-fix-vite-ws-proxy](./20260424-fix-vite-ws-proxy) — 2026-04-24: 브라우저에서 Vite `/ws` proxy가 silent로 실패해 PR #3 머지 후에도 로그가 비었던 문제 수정. UI가 WS만 `ws://localhost:7357`로 직접 연결. 함께 `formatAgentEvent`를 도입해 stream-json 잡음을 사람이 읽는 한 줄 요약(🔧 tool_use / 📥 tool_result / ✅ result)으로 변환.
 - [20260424-fix-ws-subscriber-timing](./20260424-fix-ws-subscriber-timing) — 2026-04-24: SessionManager 구독자 맵과 세션 맵 분리. WS가 spawn보다 먼저 연결되는 실제 UI 흐름에서 이벤트가 drop되던 버그 수정. docs/debug/ 신설로 계층별 probe 방법론 상설화.
