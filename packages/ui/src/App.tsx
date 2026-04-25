@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react';
+import { useCallback, useState, type JSX } from 'react';
 import { useRepos } from './hooks/useRepos.ts';
 import { RegisterForm } from './components/RegisterForm.tsx';
 import { RepoList } from './components/RepoList.tsx';
@@ -9,6 +9,22 @@ export function App(): JSX.Element {
   const { repos, loading, error, register, remove } = useRepos();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = repos.find((r) => r.id === selectedId) ?? null;
+
+  const handleRegister = useCallback(
+    async (input: { path: string; name?: string }) => {
+      const repo = await register(input);
+      setSelectedId(repo.id);
+    },
+    [register],
+  );
+
+  const handleRemove = useCallback(
+    async (id: string) => {
+      await remove(id);
+      setSelectedId((curr) => (curr === id ? null : curr));
+    },
+    [remove],
+  );
 
   return (
     <div
@@ -32,12 +48,7 @@ export function App(): JSX.Element {
       >
         <div style={{ padding: 16, borderBottom: '1px solid #1f2230' }}>
           <h2 style={{ margin: '0 0 8px' }}>kampanela</h2>
-          <RegisterForm
-            onSubmit={async (input) => {
-              const repo = await register(input);
-              setSelectedId(repo.id);
-            }}
-          />
+          <RegisterForm onSubmit={handleRegister} />
         </div>
         <div style={{ overflow: 'auto' }}>
           {loading ? (
@@ -47,10 +58,7 @@ export function App(): JSX.Element {
               repos={repos}
               selectedId={selectedId}
               onSelect={setSelectedId}
-              onRemove={async (id) => {
-                await remove(id);
-                if (selectedId === id) setSelectedId(null);
-              }}
+              onRemove={handleRemove}
             />
           )}
           {error && <div style={{ padding: 16, color: 'crimson' }}>{error}</div>}

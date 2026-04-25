@@ -1,8 +1,8 @@
-import { useMemo, useState, type JSX } from 'react';
+import { memo, useMemo, useState, type CSSProperties, type JSX } from 'react';
 import type { AgentEvent, SpawnRequest } from '@kampanela/shared';
 import { startSpawn, stopSpawn } from '../api/spawn.ts';
 import { useRepoLog } from '../hooks/useRepoLog.ts';
-import { formatAgentEvent, type FormattedKind } from '../lib/format-event.ts';
+import { formatAgentEvent, type FormattedKind, type FormattedLine } from '../lib/format-event.ts';
 
 type Props = {
   repoId: string;
@@ -17,6 +17,35 @@ const KIND_COLORS: Record<FormattedKind, string> = {
   result: '#4ade80',
   error: '#ff8080',
 };
+
+const ROOT_STYLE: CSSProperties = { display: 'grid', gap: 8, padding: 16 };
+const HEADER_STYLE: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+};
+const CONTROL_ROW_STYLE: CSSProperties = { display: 'flex', gap: 8 };
+const INPUT_STYLE: CSSProperties = { flex: 1 };
+const LOG_PANE_STYLE: CSSProperties = {
+  background: '#111',
+  color: '#eee',
+  padding: 12,
+  minHeight: 200,
+  maxHeight: 360,
+  overflow: 'auto',
+  fontSize: 12,
+  lineHeight: 1.5,
+  borderRadius: 4,
+  margin: 0,
+};
+const RAW_LABEL_STYLE: CSSProperties = {
+  fontSize: 12,
+  color: '#666',
+  display: 'flex',
+  gap: 4,
+  alignItems: 'center',
+};
+const ERROR_STYLE: CSSProperties = { color: 'crimson' };
 
 export function RepoLogView({ repoId, repoName }: Props): JSX.Element {
   const { events, connected } = useRepoLog(repoId);
@@ -34,7 +63,10 @@ export function RepoLogView({ repoId, repoName }: Props): JSX.Element {
       })),
     [events],
   );
-  const visible = showRaw ? formatted : formatted.filter((r) => r.line !== null);
+  const visible = useMemo(
+    () => (showRaw ? formatted : formatted.filter((r) => r.line !== null)),
+    [formatted, showRaw],
+  );
 
   const run = async () => {
     setBusy(true);
@@ -62,11 +94,11 @@ export function RepoLogView({ repoId, repoName }: Props): JSX.Element {
   };
 
   return (
-    <div style={{ display: 'grid', gap: 8, padding: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={ROOT_STYLE}>
+      <div style={HEADER_STYLE}>
         <h3 style={{ margin: 0 }}>{repoName}</h3>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <label style={{ fontSize: 12, color: '#666', display: 'flex', gap: 4, alignItems: 'center' }}>
+          <label style={RAW_LABEL_STYLE}>
             <input
               type="checkbox"
               checked={showRaw}
@@ -79,9 +111,9 @@ export function RepoLogView({ repoId, repoName }: Props): JSX.Element {
           </span>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={CONTROL_ROW_STYLE}>
         <input
-          style={{ flex: 1 }}
+          style={INPUT_STYLE}
           placeholder="프롬프트 (공란이면 CLI 기본 동작)"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
@@ -94,21 +126,8 @@ export function RepoLogView({ repoId, repoName }: Props): JSX.Element {
           Stop
         </button>
       </div>
-      {error && <div style={{ color: 'crimson' }}>{error}</div>}
-      <pre
-        style={{
-          background: '#111',
-          color: '#eee',
-          padding: 12,
-          minHeight: 280,
-          maxHeight: 560,
-          overflow: 'auto',
-          fontSize: 12,
-          lineHeight: 1.5,
-          borderRadius: 4,
-          margin: 0,
-        }}
-      >
+      {error && <div style={ERROR_STYLE}>{error}</div>}
+      <pre style={LOG_PANE_STYLE}>
         {visible.length === 0 ? (
           <div style={{ color: '#666' }}>
             {connected ? '대기 중 — Spawn 버튼으로 에이전트를 시작하세요.' : 'WS 연결 대기…'}
@@ -123,15 +142,13 @@ export function RepoLogView({ repoId, repoName }: Props): JSX.Element {
   );
 }
 
-function LogRow({
-  showRaw,
-  raw,
-  line,
-}: {
+type LogRowProps = {
   showRaw: boolean;
   raw: AgentEvent;
-  line: ReturnType<typeof formatAgentEvent>;
-}): JSX.Element {
+  line: FormattedLine | null;
+};
+
+const LogRow = memo(function LogRow({ showRaw, raw, line }: LogRowProps) {
   if (showRaw) {
     const color = line ? KIND_COLORS[line.kind] : '#888';
     return (
@@ -140,6 +157,6 @@ function LogRow({
       </div>
     );
   }
-  if (!line) return <></>;
+  if (!line) return null;
   return <div style={{ color: KIND_COLORS[line.kind], marginBottom: 2 }}>{line.text}</div>;
-}
+});

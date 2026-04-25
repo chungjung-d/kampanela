@@ -1,60 +1,84 @@
 import Phaser from 'phaser';
-import { TILE } from './config.ts';
+import { CANVAS_W, CANVAS_H, DESK_SLOTS, ENTRY, GRID_COLS, GRID_ROWS, TILE } from './config.ts';
 
 /**
  * Programmatic asset generation. No external files are required for MVP —
  * every texture the scene needs is rendered at runtime into the texture cache.
- * When real pixel-art spritesheets are dropped into `public/assets/` the
- * loader below can be extended to `load.spritesheet(...)` and AgentSprite
- * will pick them up by texture key without further changes.
+ *
+ * Key perf choice: the entire static office (floor + walls + desks) is baked
+ * into one canvas-sized texture `office-bg`. One `add.image` for the whole
+ * background beats hundreds of 32x32 tiles the renderer has to track per
+ * frame. When real pixel-art assets are dropped into `public/assets/` the
+ * loader can be extended to `load.image('office-bg', ...)` and the bake
+ * here becomes the fallback.
  */
 export const TEX = {
-  floor: 'tex-floor',
-  wall: 'tex-wall',
-  desk: 'tex-desk',
+  officeBg: 'tex-office-bg',
   agent: (color: string) => `tex-agent-${color}`,
   ring: 'tex-selection-ring',
 } as const;
 
 export function generateTextures(scene: Phaser.Scene): void {
-  // Checker-like floor tile
-  const floor = scene.add.graphics({ x: 0, y: 0 });
-  floor.fillStyle(0x1f2430, 1);
-  floor.fillRect(0, 0, TILE, TILE);
-  floor.fillStyle(0x262b3a, 1);
-  floor.fillRect(1, 1, TILE - 2, TILE - 2);
-  floor.generateTexture(TEX.floor, TILE, TILE);
-  floor.destroy();
+  generateOfficeBackground(scene);
 
-  // Wall
-  const wall = scene.add.graphics({ x: 0, y: 0 });
-  wall.fillStyle(0x3a3f50, 1);
-  wall.fillRect(0, 0, TILE, TILE);
-  wall.lineStyle(2, 0x55606d, 1);
-  wall.strokeRect(1, 1, TILE - 2, TILE - 2);
-  wall.generateTexture(TEX.wall, TILE, TILE);
-  wall.destroy();
-
-  // Desk (brown with top highlight)
-  const desk = scene.add.graphics({ x: 0, y: 0 });
-  desk.fillStyle(0x8b5e3c, 1);
-  desk.fillRoundedRect(2, 4, TILE - 4, TILE - 12, 3);
-  desk.fillStyle(0xa57448, 1);
-  desk.fillRoundedRect(2, 4, TILE - 4, 4, 2);
-  // monitor hint
-  desk.fillStyle(0x111419, 1);
-  desk.fillRect(TILE / 2 - 6, 8, 12, 8);
-  desk.fillStyle(0x3bb273, 1);
-  desk.fillRect(TILE / 2 - 5, 9, 10, 6);
-  desk.generateTexture(TEX.desk, TILE, TILE);
-  desk.destroy();
-
-  // Selection ring
-  const ring = scene.add.graphics({ x: 0, y: 0 });
+  // Selection ring (separate texture because it sits under each agent).
+  const ring = scene.make.graphics({ x: 0, y: 0 }, false);
   ring.lineStyle(2, 0xffd34d, 1);
   ring.strokeCircle(TILE / 2, TILE / 2, TILE / 2 - 2);
   ring.generateTexture(TEX.ring, TILE, TILE);
   ring.destroy();
+}
+
+function generateOfficeBackground(scene: Phaser.Scene): void {
+  if (scene.textures.exists(TEX.officeBg)) return;
+  const g = scene.make.graphics({ x: 0, y: 0 }, false);
+
+  // Floor — two-tone checker pattern drawn inline (no per-tile GameObject).
+  for (let c = 0; c < GRID_COLS; c++) {
+    for (let r = 0; r < GRID_ROWS; r++) {
+      const x = c * TILE;
+      const y = r * TILE;
+      g.fillStyle(0x1f2430, 1);
+      g.fillRect(x, y, TILE, TILE);
+      g.fillStyle(0x262b3a, 1);
+      g.fillRect(x + 1, y + 1, TILE - 2, TILE - 2);
+    }
+  }
+
+  // Walls around the edge, leaving the entry tile open.
+  const drawWall = (col: number, row: number) => {
+    const x = col * TILE;
+    const y = row * TILE;
+    g.fillStyle(0x3a3f50, 1);
+    g.fillRect(x, y, TILE, TILE);
+    g.lineStyle(2, 0x55606d, 1);
+    g.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
+  };
+  for (let c = 0; c < GRID_COLS; c++) {
+    drawWall(c, 0);
+    drawWall(c, GRID_ROWS - 1);
+  }
+  for (let r = 0; r < GRID_ROWS; r++) {
+    if (r !== ENTRY.row) drawWall(0, r);
+    drawWall(GRID_COLS - 1, r);
+  }
+
+  // Desks.
+  for (const slot of DESK_SLOTS) {
+    const x = slot.col * TILE;
+    const y = slot.row * TILE;
+    g.fillStyle(0x8b5e3c, 1);
+    g.fillRoundedRect(x + 2, y + 4, TILE - 4, TILE - 12, 3);
+    g.fillStyle(0xa57448, 1);
+    g.fillRoundedRect(x + 2, y + 4, TILE - 4, 4, 2);
+    g.fillStyle(0x111419, 1);
+    g.fillRect(x + TILE / 2 - 6, y + 8, 12, 8);
+    g.fillStyle(0x3bb273, 1);
+    g.fillRect(x + TILE / 2 - 5, y + 9, 10, 6);
+  }
+
+  g.generateTexture(TEX.officeBg, CANVAS_W, CANVAS_H);
+  g.destroy();
 }
 
 export function ensureAgentTexture(scene: Phaser.Scene, color: number): string {
